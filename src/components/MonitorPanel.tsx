@@ -6,12 +6,16 @@ import type { Servo, Telemetry } from '../serial/servo'
 import { sleep } from '../serial/timing'
 import { describeError } from './errors'
 import { ExchangeView } from './ExchangeView'
+import { LineChart } from './LineChart'
 import { StepCard } from './StepCard'
 import { StatusBadge } from './StatusBadge'
 
 /** Periodo di campionamento del monitor. */
 const MONITOR_PERIOD_MS = 100
-const HISTORY_LENGTH = 15
+/** Campioni tenuti per i grafici: 100 × 100 ms = 10 s. */
+const HISTORY_LENGTH = 100
+/** Righe mostrate nella tabella dei campioni. */
+const TABLE_ROWS = 15
 
 interface Sample extends Telemetry {
   seq: number
@@ -86,6 +90,10 @@ export function MonitorPanel({ servo, connected }: Props) {
 
   const last = samples.at(-1)
   const load = last ? decodeLoad(last.loadRaw) : null
+  const loadPoints = samples.map((s) => ({ t: s.time, v: decodeLoad(s.loadRaw).percent }))
+  const currentPoints = samples.map((s) => ({ t: s.time, v: currentToMilliamps(s.currentRaw) }))
+  const loadMax = Math.max(10, ...loadPoints.map((p) => p.v))
+  const currentMax = Math.max(100, ...currentPoints.map((p) => p.v))
 
   return (
     <StepCard id="passo-3" topic="step3" number={3} title="Temperatura, tensione, carico e corrente">
@@ -111,11 +119,11 @@ export function MonitorPanel({ servo, connected }: Props) {
             </span>
             <StatusBadge status={last.status} />
           </div>
-          <div className="gauges">
-            <div>
-              <span className="note">Carico</span>
-              <strong>{fmt(load.percent)}%</strong>
-              <div className="bar">
+          <div className="tiles">
+            <div className="tile">
+              <span className="tile-label">Carico</span>
+              <span className="tile-value">{fmt(load.percent)}%</span>
+              <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={load.percent} aria-label="Carico">
                 <div style={{ width: `${Math.min(100, load.percent)}%` }} />
               </div>
               <span className="note">
@@ -123,26 +131,47 @@ export function MonitorPanel({ servo, connected }: Props) {
                 {!load.plausible && ' (FORMATO NON PLAUSIBILE)'}
               </span>
             </div>
-            <div>
-              <span className="note">Temperatura</span>
-              <strong>{last.temperatureRaw} °C</strong>
+            <div className="tile">
+              <span className="tile-label">Corrente</span>
+              <span className="tile-value">{fmt(currentToMilliamps(last.currentRaw), 0)} mA</span>
+              <span className="note">grezzo {last.currentRaw} × 6,5 mA</span>
             </div>
-            <div>
-              <span className="note">Tensione</span>
-              <strong>{fmt(voltageToVolts(last.voltageRaw))} V</strong>
-              <span className="note">grezzo {last.voltageRaw}</span>
+            <div className="tile">
+              <span className="tile-label">Temperatura</span>
+              <span className="tile-value">{last.temperatureRaw} °C</span>
+              <span className="note">grezzo {last.temperatureRaw}</span>
             </div>
-            <div>
-              <span className="note">Corrente</span>
-              <strong>{fmt(currentToMilliamps(last.currentRaw), 0)} mA</strong>
-              <span className="note">grezzo {last.currentRaw}</span>
+            <div className="tile">
+              <span className="tile-label">Tensione</span>
+              <span className="tile-value">{fmt(voltageToVolts(last.voltageRaw))} V</span>
+              <span className="note">grezzo {last.voltageRaw} × 0,1 V</span>
             </div>
           </div>
         </>
       )}
 
       {samples.length > 0 && (
+        <div className="charts">
+          <LineChart
+            title="Carico (% della coppia massima), ultimi 10 s"
+            points={loadPoints}
+            yMax={loadMax}
+            format={(v) => `${fmt(v)}%`}
+            detail={(i) => `direzione ${decodeLoad(samples[i].loadRaw).direction}, grezzo ${samples[i].loadRaw}`}
+          />
+          <LineChart
+            title="Corrente (mA), ultimi 10 s"
+            points={currentPoints}
+            yMax={currentMax}
+            format={(v) => `${fmt(v, 0)} mA`}
+            detail={(i) => `grezzo ${samples[i].currentRaw}`}
+          />
+        </div>
+      )}
+
+      {samples.length > 0 && (
         <div className="table-wrap">
+          <h3>Ultimi {Math.min(TABLE_ROWS, samples.length)} campioni</h3>
           <table>
             <thead>
               <tr>
@@ -156,7 +185,7 @@ export function MonitorPanel({ servo, connected }: Props) {
               </tr>
             </thead>
             <tbody>
-              {[...samples].reverse().map((s) => (
+              {samples.slice(-TABLE_ROWS).reverse().map((s) => (
                 <tr key={s.seq}>
                   <td>{new Date(s.time).toLocaleTimeString('it-IT')}</td>
                   <td>{formatLoad(s.loadRaw)}</td>

@@ -13,6 +13,7 @@ import {
 import type { Servo } from '../serial/servo'
 import { describeError } from './errors'
 import { ExchangeView } from './ExchangeView'
+import { PositionDial } from './PositionDial'
 import { StepCard } from './StepCard'
 import { StatusBadge } from './StatusBadge'
 
@@ -97,6 +98,8 @@ export function PositionPanel({ servo, connected }: Props) {
           Dove sei
         </button>
       </div>
+
+      <PositionDial preview={target} target={sent?.value ?? null} actual={read?.value ?? null} />
 
       {sent && (
         <p>

@@ -767,34 +767,133 @@ th {
 
 /* ---- Monitor ----------------------------------------------------------- */
 
-.gauges {
+.tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 12px;
-  margin: 8px 0 12px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 8px 0 14px;
 }
 
-.gauges > div {
+.tile {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
 }
 
-.gauges strong {
-  font-size: 1.4rem;
-  font-variant-numeric: tabular-nums;
+.tile-label {
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
-.bar {
+.tile-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.meter {
   height: 8px;
-  background: var(--line);
+  margin: 4px 0;
+  background: var(--accent-soft);
   border-radius: 4px;
   overflow: hidden;
 }
 
-.bar > div {
+.meter > div {
   height: 100%;
   background: var(--accent);
+  border-radius: 0 4px 4px 0;
+}
+
+.charts {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chart {
+  margin: 0;
+}
+
+.chart figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.chart figcaption strong {
+  color: var(--ink);
+}
+
+.chart-plot {
+  position: relative;
+}
+
+.chart svg {
+  width: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart-tick {
+  fill: var(--muted);
+  font-size: 11px;
+  text-anchor: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-tick-x {
+  text-anchor: start;
+}
+
+.chart-tick-x.end {
+  text-anchor: end;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--accent);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.chart-crosshair {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  font-size: 0.85rem;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 /* ---- Sequenza ---------------------------------------------------------- */
@@ -872,4 +971,159 @@ th {
 .log-alarm .log-text {
   color: var(--alarm);
   font-weight: 600;
+}
+
+/* ---- Quadrante del passo 2 --------------------------------------------- */
+
+.dial-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin: 6px 0 12px;
+}
+
+.dial {
+  width: 240px;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.dial-side {
+  flex: 1;
+  min-width: 220px;
+}
+
+.dial-face {
+  fill: var(--panel-2);
+  stroke: var(--line);
+  stroke-width: 2;
+}
+
+.dial-tick {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.dial-tick.major {
+  stroke-width: 2;
+}
+
+.dial-label {
+  fill: var(--muted);
+  font-size: 12px;
+  text-anchor: middle;
+  font-family: var(--mono);
+}
+
+.dial-hub {
+  fill: var(--ink);
+}
+
+.needle-preview line,
+.key.needle-preview {
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+}
+
+.needle-preview circle {
+  fill: var(--panel);
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
+.needle-target line,
+.key.needle-target {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: 8 4;
+}
+
+.needle-target circle {
+  fill: var(--accent);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.needle-actual line,
+.key.needle-actual {
+  stroke: var(--ok);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.needle-actual circle {
+  fill: var(--ok);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.needle-far line,
+.key.needle-far {
+  stroke: var(--alarm);
+}
+
+.needle-far circle {
+  fill: var(--alarm);
+}
+
+.dial-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.dial-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.tolerance {
+  margin: 8px 0;
+}
+
+.tolerance figcaption {
+  margin-bottom: 4px;
+}
+
+.tolerance svg {
+  width: 100%;
+  max-width: 320px;
+  display: block;
+}
+
+.tol-axis {
+  stroke: var(--line);
+  stroke-width: 2;
+}
+
+.tol-band {
+  fill: var(--ok-bg);
+  stroke: var(--ok);
+  stroke-width: 1;
+}
+
+.tol-tick {
+  stroke: var(--muted);
+}
+
+.tol-label {
+  fill: var(--muted);
+  font-size: 10px;
+  text-anchor: middle;
+  font-family: var(--mono);
+}
+
+.tol-marker circle {
+  fill: var(--ok);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.tol-far circle {
+  fill: var(--alarm);
 }

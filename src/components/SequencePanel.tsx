@@ -8,6 +8,7 @@ import {
 } from '../serial/sequence'
 import type { Servo } from '../serial/servo'
 import { describeError } from './errors'
+import { StepCard } from './StepCard'
 
 // Differenze grandi per vedere bene il movimento.
 const DEFAULT_SEQUENCE = [1024, 3072, 2048, 512, 2048]
@@ -103,8 +104,7 @@ export function SequencePanel({ servo, connected }: Props) {
   useEffect(() => () => controllerRef.current?.abort(), [])
 
   return (
-    <section className="panel">
-      <h2>Passo 4: sequenza di posizioni</h2>
+    <StepCard id="passo-4" topic="step4" number={4} title="Sequenza di posizioni">
       <ol className="sequence">
         {steps.map((step, index) => {
           const outcome = outcomes[index]
@@ -171,6 +171,6 @@ export function SequencePanel({ servo, connected }: Props) {
         comandi: il servo completa il movimento verso l'ultimo obiettivo già scritto.
       </p>
       {error && <p className="error">{error}</p>}
-    </section>
+    </StepCard>
   )
 }

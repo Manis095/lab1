@@ -5,6 +5,8 @@ import { currentToMilliamps, decodeLoad, voltageToVolts } from '../serial/regist
 import type { Servo, Telemetry } from '../serial/servo'
 import { sleep } from '../serial/timing'
 import { describeError } from './errors'
+import { ExchangeView } from './ExchangeView'
+import { StepCard } from './StepCard'
 import { StatusBadge } from './StatusBadge'
 
 /** Periodo di campionamento del monitor. */
@@ -86,8 +88,7 @@ export function MonitorPanel({ servo, connected }: Props) {
   const load = last ? decodeLoad(last.loadRaw) : null
 
   return (
-    <section className="panel">
-      <h2>Passo 3: temperatura, tensione, carico e corrente</h2>
+    <StepCard id="passo-3" topic="step3" number={3} title="Temperatura, tensione, carico e corrente">
       <div className="row">
         <button
           type="button"
@@ -177,6 +178,7 @@ export function MonitorPanel({ servo, connected }: Props) {
         corso. Prova: sforza il servo a mano, deve restare fermo mentre il carico sale.
       </p>
       {error && <p className="error">{error}</p>}
-    </section>
+      <ExchangeView keys={['telemetry']} emptyHint={`Premi "Avvia": qui compare l'ultima lettura del blocco 60..70.`} />
+    </StepCard>
   )
 }

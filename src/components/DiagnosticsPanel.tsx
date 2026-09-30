@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { DIAGNOSTIC_REGISTERS } from '../serial/diagnostics'
 import type { Servo } from '../serial/servo'
 import { describeError } from './errors'
+import { StepCard } from './StepCard'
 
 interface Row {
   address: number
@@ -42,8 +43,12 @@ export function DiagnosticsPanel({ servo, connected }: Props) {
   }
 
   return (
-    <section className="panel">
-      <h2>Diagnostica</h2>
+    <StepCard
+      id="diagnostica"
+      topic="step3"
+      title="Diagnostica"
+      whatHappens="Legge una volta, con una richiesta per registro, i valori da confrontare con quelli attesi a servo fermo."
+    >
       <div className="row">
         <button type="button" onClick={handleRun} disabled={!connected || busy}>
           Diagnostica
@@ -114,6 +119,6 @@ export function DiagnosticsPanel({ servo, connected }: Props) {
         Se un valore è fuori attesa in modo sistematico (per esempio la tensione non vale circa 120),
         l'indirizzo o la conversione della tabella di terze parti vanno ricontrollati sul portale.
       </p>
-    </section>
+    </StepCard>
   )
 }

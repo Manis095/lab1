@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { SerialConnection } from '../serial/connection'
 import type { Servo } from '../serial/servo'
 import { describeError } from './errors'
+import { ExchangeView } from './ExchangeView'
+import { StepCard } from './StepCard'
 import { StatusBadge } from './StatusBadge'
 
 interface Props {
@@ -74,8 +76,7 @@ export function ConnectPanel({ connection, servo, connected }: Props) {
   }
 
   return (
-    <section className="panel">
-      <h2>Passo 1: collegamento e ping</h2>
+    <StepCard id="passo-1" topic="step1" number={1} title="Collegamento e ping">
       <div className="row">
         {!connected ? (
           <button type="button" className="primary" onClick={handleConnect} disabled={busy}>
@@ -104,6 +105,7 @@ export function ConnectPanel({ connection, servo, connected }: Props) {
       )}
       {burst && <p>Due richieste di fila: {burst}</p>}
       {error && <p className="error">{error}</p>}
-    </section>
+      <ExchangeView keys={['ping']} emptyHint='Premi "Collega": qui compariranno i byte del ping e della risposta.' />
+    </StepCard>
   )
 }

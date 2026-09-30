@@ -12,6 +12,8 @@ import {
 } from '../serial/registers'
 import type { Servo } from '../serial/servo'
 import { describeError } from './errors'
+import { ExchangeView } from './ExchangeView'
+import { StepCard } from './StepCard'
 import { StatusBadge } from './StatusBadge'
 
 interface Props {
@@ -60,8 +62,7 @@ export function PositionPanel({ servo, connected }: Props) {
   const comparison = sent && read ? comparePosition(sent.value, read.value) : null
 
   return (
-    <section className="panel">
-      <h2>Passo 2: posizione</h2>
+    <StepCard id="passo-2" topic="step2" number={2} title="Posizione">
       <div className="row">
         <label htmlFor="target">Obiettivo</label>
         <input
@@ -129,6 +130,7 @@ export function PositionPanel({ servo, connected }: Props) {
         </p>
       )}
       {error && <p className="error">{error}</p>}
-    </section>
+      <ExchangeView keys={['goal', 'position']} emptyHint='Premi "Vai" o "Dove sei" per vedere i byte scambiati.' />
+    </StepCard>
   )
 }

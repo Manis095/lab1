@@ -242,3 +242,38 @@ th {
   color: var(--alarm);
   font-weight: 600;
 }
+
+.gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+
+.gauges > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gauges strong {
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 8px;
+  background: #ecece6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar > div {
+  height: 100%;
+  background: var(--accent);
+}
+
+.alarm-cell {
+  color: var(--alarm);
+  font-weight: 600;
+}

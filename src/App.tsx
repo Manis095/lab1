@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ConnectPanel } from './components/ConnectPanel'
 import { type LogEntry, LogPanel } from './components/LogPanel'
+import { DiagnosticsPanel } from './components/DiagnosticsPanel'
+import { MonitorPanel } from './components/MonitorPanel'
 import { PositionPanel } from './components/PositionPanel'
 import { SerialConnection } from './serial/connection'
 import { Servo } from './serial/servo'
@@ -44,6 +46,8 @@ export default function App() {
         <div className="controls">
           <ConnectPanel connection={connection} servo={servo} connected={connected} />
           <PositionPanel servo={servo} connected={connected} />
+          <MonitorPanel servo={servo} connected={connected} />
+          <DiagnosticsPanel servo={servo} connected={connected} />
         </div>
         <LogPanel entries={log} onClear={() => setLog([])} />
       </div>

@@ -94,7 +94,7 @@ export class SerialConnection {
   private queue: Promise<unknown> = Promise.resolve()
   private pending: PendingRequest | null = null
   private listeners = new Set<TrafficListener>()
-  private disconnectListeners = new Set<() => void>()
+  private stateListeners = new Set<(connected: boolean) => void>()
 
   /** Timeout consecutivi: molti di fila indicano alimentazione o cavi guasti. */
   consecutiveTimeouts = 0
@@ -108,10 +108,10 @@ export class SerialConnection {
     return () => this.listeners.delete(listener)
   }
 
-  /** Chiamato quando la porta si chiude (anche per cavo scollegato). */
-  onDisconnect(listener: () => void): () => void {
-    this.disconnectListeners.add(listener)
-    return () => this.disconnectListeners.delete(listener)
+  /** Chiamato all'apertura e alla chiusura della porta (anche per cavo scollegato). */
+  onConnectionChange(listener: (connected: boolean) => void): () => void {
+    this.stateListeners.add(listener)
+    return () => this.stateListeners.delete(listener)
   }
 
   /**
@@ -142,6 +142,7 @@ export class SerialConnection {
     openConnections.add(this)
     this.readLoopDone = this.readLoop(this.reader)
     this.emit('INFO', `Porta aperta a ${BAUD_RATE} baud`)
+    for (const listener of this.stateListeners) listener(true)
   }
 
   /**
@@ -190,7 +191,7 @@ export class SerialConnection {
     this.reader = null
     this.writer = null
     this.readLoopDone = null
-    for (const listener of this.disconnectListeners) listener()
+    for (const listener of this.stateListeners) listener(false)
   }
 
   private async readLoop(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {

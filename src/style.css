@@ -1,6 +1,244 @@
 :root {
-  font-family: system-ui, sans-serif;
-  color: #1d1d1f;
-  background: #f6f6f4;
+  --bg: #f4f4f1;
+  --panel: #ffffff;
+  --ink: #1d1d1f;
+  --muted: #6b6b70;
+  --line: #deded8;
+  --accent: #1f5fbf;
+  --ok: #1d7a3e;
+  --ok-bg: #e3f3e8;
+  --warn: #9a6200;
+  --warn-bg: #fff3d6;
+  --alarm: #b3261e;
+  --alarm-bg: #fde7e5;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--bg);
 }
-body { margin: 0; }
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 1.35rem;
+  margin: 0 0 16px;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.panel > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.panel > header h2 {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+button {
+  font: inherit;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f7f7f5;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+input[type='number'] {
+  font: inherit;
+  width: 6em;
+  padding: 4px 6px;
+}
+
+input[type='range'] {
+  flex: 1;
+  min-width: 160px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.dot.on {
+  background: var(--ok);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.badge.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.badge.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.badge.alarm {
+  background: var(--alarm-bg);
+  color: var(--alarm);
+  font-weight: 600;
+}
+
+.badge small {
+  font-weight: 400;
+}
+
+.error {
+  color: var(--alarm);
+  background: var(--alarm-bg);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.log-panel {
+  position: sticky;
+  top: 16px;
+}
+
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: calc(100vh - 140px);
+  min-height: 300px;
+  overflow-y: auto;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.log li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 4px;
+  border-bottom: 1px solid #f0f0ec;
+}
+
+.log-time {
+  color: var(--muted);
+}
+
+.log-kind {
+  width: 3.5em;
+  font-weight: 600;
+}
+
+.log-tx .log-kind {
+  color: var(--accent);
+}
+
+.log-rx .log-kind {
+  color: var(--ok);
+}
+
+.log-warn {
+  background: var(--warn-bg);
+}
+
+.log-alarm {
+  background: var(--alarm-bg);
+}
+
+.log-alarm .log-text {
+  color: var(--alarm);
+  font-weight: 600;
+}

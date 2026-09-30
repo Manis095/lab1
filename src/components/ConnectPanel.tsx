@@ -15,6 +15,7 @@ export function ConnectPanel({ connection, servo, connected }: Props) {
   const [busy, setBusy] = useState(false)
   const [pingStatus, setPingStatus] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [burst, setBurst] = useState<string | null>(null)
 
   async function ping() {
     setPingStatus(null)
@@ -47,6 +48,24 @@ export function ConnectPanel({ connection, servo, connected }: Props) {
     }
   }
 
+  // Prova: due richieste lanciate insieme, senza attendere la prima.
+  // La coda della connessione le invia una alla volta e separa le risposte.
+  async function handleBurst() {
+    setBusy(true)
+    setError(null)
+    setBurst(null)
+    try {
+      const [status, position] = await Promise.all([servo.ping(), servo.readPosition()])
+      setBurst(
+        `ping: stato ${status.toString(16).padStart(2, '0')}, posizione: ${position.value} (stato ${position.status.toString(16).padStart(2, '0')})`,
+      )
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleDisconnect() {
     setBusy(true)
     await connection.disconnect()
@@ -67,6 +86,9 @@ export function ConnectPanel({ connection, servo, connected }: Props) {
             <button type="button" onClick={handlePing} disabled={busy}>
               Ping
             </button>
+            <button type="button" onClick={handleBurst} disabled={busy}>
+              Due richieste di fila
+            </button>
             <button type="button" onClick={handleDisconnect} disabled={busy}>
               Scollega
             </button>
@@ -80,6 +102,7 @@ export function ConnectPanel({ connection, servo, connected }: Props) {
           Risposta al ping: <StatusBadge status={pingStatus} />
         </p>
       )}
+      {burst && <p>Due richieste di fila: {burst}</p>}
       {error && <p className="error">{error}</p>}
     </section>
   )

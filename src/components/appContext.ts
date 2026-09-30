@@ -1,17 +1,23 @@
-// Stato condiviso dall'interfaccia: ultimi scambi sul bus e apertura del ripasso.
+// Stato condiviso dall'interfaccia: ultimi scambi sul bus, avanzamento dei
+// passi e apertura del ripasso.
 
 import { createContext, useContext } from 'react'
 import type { TopicId } from '../learn/content'
 import type { Exchange, ExchangeMap } from '../learn/exchanges'
 
+export type StepNumber = 1 | 2 | 3 | 4
+
 export interface AppContextValue {
   exchanges: ExchangeMap
   openLearn: (topic: TopicId) => void
+  /** Per i passi che non si deducono dal traffico (la sequenza completata). */
+  markStepDone: (step: StepNumber) => void
 }
 
 export const AppContext = createContext<AppContextValue>({
   exchanges: {},
   openLearn: () => undefined,
+  markStepDone: () => undefined,
 })
 
 export function useExchanges(): ExchangeMap {
@@ -22,6 +28,10 @@ export function useOpenLearn(): (topic: TopicId) => void {
   return useContext(AppContext).openLearn
 }
 
+export function useMarkStepDone(): (step: StepNumber) => void {
+  return useContext(AppContext).markStepDone
+}
+
 /** Lo scambio più recente, di qualsiasi tipo. */
 export function latestExchange(map: ExchangeMap): Exchange | null {
   let latest: Exchange | null = null
@@ -29,4 +39,9 @@ export function latestExchange(map: ExchangeMap): Exchange | null {
     if (exchange && (!latest || exchange.txTime >= latest.txTime)) latest = exchange
   }
   return latest
+}
+
+/** Byte di stato della risposta di uno scambio, se c'è. */
+export function responseStatus(exchange: Exchange | undefined): number | null {
+  return exchange?.rx && exchange.rx.length >= 6 ? exchange.rx[4] : null
 }

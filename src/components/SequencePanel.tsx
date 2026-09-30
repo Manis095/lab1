@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { Point } from '../learn/chart'
 import { clampPosition, POSITION_MAX, POSITION_MIN, POSITION_TOLERANCE } from '../serial/registers'
 import {
   runSequence,
@@ -7,11 +8,15 @@ import {
   type StepOutcome,
 } from '../serial/sequence'
 import type { Servo } from '../serial/servo'
+import { useMarkStepDone } from './appContext'
 import { describeError } from './errors'
+import { SequenceChart } from './SequenceChart'
 import { StepCard } from './StepCard'
 
 // Differenze grandi per vedere bene il movimento.
 const DEFAULT_SEQUENCE = [1024, 3072, 2048, 512, 2048]
+/** Letture tenute per il grafico (con "ripeti" la sequenza non finisce mai). */
+const MAX_CHART_POINTS = 2000
 
 interface Step {
   key: number
@@ -36,7 +41,9 @@ export function SequencePanel({ servo, connected }: Props) {
   const [outcomes, setOutcomes] = useState<Record<number, StepOutcome>>({})
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [history, setHistory] = useState<{ targets: Point[]; positions: Point[] }>({ targets: [], positions: [] })
   const controllerRef = useRef<AbortController | null>(null)
+  const markStepDone = useMarkStepDone()
 
   function update(index: number, value: string) {
     setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, value } : s)))
@@ -49,6 +56,7 @@ export function SequencePanel({ servo, connected }: Props) {
   function handleEvent(event: SequenceEvent) {
     switch (event.type) {
       case 'step':
+        setHistory((h) => ({ ...h, targets: [...h.targets, { t: Date.now(), v: event.target }].slice(-MAX_CHART_POINTS) }))
         setCurrent(event.index)
         setLivePosition(null)
         setOutcomes((prev) => {
@@ -58,6 +66,7 @@ export function SequencePanel({ servo, connected }: Props) {
         })
         break
       case 'position':
+        setHistory((h) => ({ ...h, positions: [...h.positions, { t: Date.now(), v: event.position }].slice(-MAX_CHART_POINTS) }))
         setLivePosition(event.position)
         break
       case 'status':
@@ -77,6 +86,7 @@ export function SequencePanel({ servo, connected }: Props) {
     controllerRef.current = controller
     setRunning(true)
     setOutcomes({})
+    setHistory({ targets: [], positions: [] })
     setMessage(null)
     setError(null)
     try {
@@ -85,6 +95,7 @@ export function SequencePanel({ servo, connected }: Props) {
         result = await runSequence(servo, positions, { signal: controller.signal, onEvent: handleEvent })
       } while (repeat && result === 'completed' && !controller.signal.aborted)
       setMessage(result === 'completed' ? 'Sequenza completata.' : 'Sequenza interrotta.')
+      if (result === 'completed') markStepDone(4)
     } catch (err) {
       setError(describeError(err))
     } finally {
@@ -165,6 +176,12 @@ export function SequencePanel({ servo, connected }: Props) {
         </button>
         {message && <span className="note">{message}</span>}
       </div>
+      <SequenceTrack
+        values={steps.map((st) => clampPosition(Number(st.value)))}
+        current={current}
+        outcomes={outcomes}
+      />
+      <SequenceChart targets={history.targets} positions={history.positions} />
       <p className="note">
         Per ogni posizione: scrive l'obiettivo, rilegge finché è entro ±{POSITION_TOLERANCE} (massimo{' '}
         {SEQUENCE_ARRIVAL_TIMEOUT_MS / 1000} s), poi passa alla successiva. "Ferma" smette subito di inviare
@@ -172,5 +189,37 @@ export function SequencePanel({ servo, connected }: Props) {
       </p>
       {error && <p className="error">{error}</p>}
     </StepCard>
+  )
+}
+
+interface TrackProps {
+  values: number[]
+  current: number | null
+  outcomes: Record<number, StepOutcome>
+}
+
+/** "Binario" delle tappe: stato di ognuna scritto a parole, non solo a colori. */
+function SequenceTrack({ values, current, outcomes }: TrackProps) {
+  return (
+    <ol className="track" aria-label="Tappe della sequenza">
+      {values.map((v, i) => {
+        const outcome = outcomes[i]
+        const state =
+          i === current ? 'current' : outcome?.kind === 'arrived' ? 'arrived' : outcome?.kind === 'timeout' ? 'timeout' : 'waiting'
+        const label = {
+          current: 'in corso',
+          arrived: 'arrivato',
+          timeout: 'non arrivato',
+          waiting: 'in attesa',
+        }[state]
+        return (
+          <li key={i} className={`stop stop-${state}`}>
+            <span className="stop-dot">{i + 1}</span>
+            <span className="stop-value">{v}</span>
+            <span className="stop-state">{label}</span>
+          </li>
+        )
+      })}
+    </ol>
   )
 }

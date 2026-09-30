@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { SerialConnection } from '../serial/connection'
 import type { Servo } from '../serial/servo'
 import { describeError } from './errors'
+import { ConnectionChain } from './ConnectionChain'
 import { ExchangeView } from './ExchangeView'
 import { StepCard } from './StepCard'
 import { StatusBadge } from './StatusBadge'
@@ -98,6 +99,7 @@ export function ConnectPanel({ connection, servo, connected }: Props) {
         <span className={connected ? 'dot on' : 'dot'} />
         <span>{connected ? `Collegato, servo ID ${servo.id}` : 'Non collegato'}</span>
       </div>
+      <ConnectionChain connected={connected} />
       {pingStatus !== null && (
         <p>
           Risposta al ping: <StatusBadge status={pingStatus} />

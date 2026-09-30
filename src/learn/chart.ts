@@ -83,3 +83,19 @@ export function polar(cx: number, cy: number, r: number, angleDeg: number): { x:
   const rad = ((angleDeg - 90) * Math.PI) / 180
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
 }
+
+/**
+ * Linea a gradini: l'obiettivo resta costante fino al cambio successivo.
+ * Riceve i cambi di obiettivo e l'istante finale del grafico.
+ */
+export function steppedPoints(changes: Point[], endT: number): Point[] {
+  const out: Point[] = []
+  changes.forEach((c, i) => {
+    if (i > 0) out.push({ t: c.t, v: changes[i - 1].v })
+    out.push(c)
+  })
+  if (changes.length > 0 && endT > changes[changes.length - 1].t) {
+    out.push({ t: endT, v: changes[changes.length - 1].v })
+  }
+  return out
+}

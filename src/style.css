@@ -32,6 +32,10 @@
   --tag-confermato: #1a6e38;
   --tag-verificare: #9a5a00;
 
+  /* Serie dei grafici, validate per daltonismo e contrasto (chiaro e scuro). */
+  --series-1: #1f5fbf;
+  --series-2: #b05a00;
+
   --mono: ui-monospace, 'Cascadia Mono', Consolas, 'SF Mono', monospace;
   --radius: 10px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 2px 8px rgb(0 0 0 / 0.04);
@@ -42,6 +46,77 @@
   color: var(--ink);
   background: var(--bg);
   color-scheme: light;
+}
+
+/* Tema scuro: stessi ruoli, valori propri (non un'inversione automatica). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #111317;
+    --panel: #1a1d23;
+    --panel-2: #22262e;
+    --ink: #eceef2;
+    --muted: #a6abb5;
+    --line: #373c47;
+    --accent: #6ea1ff;
+    --accent-ink: #0b1020;
+    --accent-soft: #1b2944;
+    --ok: #62d18c;
+    --ok-bg: #16331f;
+    --warn: #f2bb5c;
+    --warn-bg: #3a2c10;
+    --alarm: #ff8a80;
+    --alarm-bg: #45201d;
+    --k-header: #a4abba;
+    --k-id: #c79bf2;
+    --k-length: #52cfd4;
+    --k-instruction: #6ea1ff;
+    --k-status: #62d18c;
+    --k-address: #ffab5c;
+    --k-count: #e3c451;
+    --k-data: #98a4ff;
+    --k-checksum: #b5c1c8;
+    --tag-lezione: #7fb0ff;
+    --tag-confermato: #62d18c;
+    --tag-verificare: #f2bb5c;
+    --series-1: #5b8ff0;
+    --series-2: #c97a22;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #111317;
+  --panel: #1a1d23;
+  --panel-2: #22262e;
+  --ink: #eceef2;
+  --muted: #a6abb5;
+  --line: #373c47;
+  --accent: #6ea1ff;
+  --accent-ink: #0b1020;
+  --accent-soft: #1b2944;
+  --ok: #62d18c;
+  --ok-bg: #16331f;
+  --warn: #f2bb5c;
+  --warn-bg: #3a2c10;
+  --alarm: #ff8a80;
+  --alarm-bg: #45201d;
+  --k-header: #a4abba;
+  --k-id: #c79bf2;
+  --k-length: #52cfd4;
+  --k-instruction: #6ea1ff;
+  --k-status: #62d18c;
+  --k-address: #ffab5c;
+  --k-count: #e3c451;
+  --k-data: #98a4ff;
+  --k-checksum: #b5c1c8;
+  --tag-lezione: #7fb0ff;
+  --tag-confermato: #62d18c;
+  --tag-verificare: #f2bb5c;
+  --series-1: #5b8ff0;
+  --series-2: #c97a22;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
 }
 
 /* ---- Base -------------------------------------------------------------- */
@@ -863,14 +938,14 @@ th {
 
 .chart-line {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--series-1);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .chart-dot {
-  fill: var(--accent);
+  fill: var(--series-1);
   stroke: var(--panel);
   stroke-width: 2;
 }
@@ -921,14 +996,14 @@ th {
 
 .log-panel {
   position: sticky;
-  top: 16px;
+  top: calc(64px + env(safe-area-inset-top, 0px));
 }
 
 .log {
   list-style: none;
   margin: 0;
   padding: 0;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 300px);
   min-height: 300px;
   overflow-y: auto;
   font-family: var(--mono);
@@ -1126,4 +1201,361 @@ th {
 
 .tol-far circle {
   fill: var(--alarm);
+}
+
+/* ---- Barra di avanzamento ---------------------------------------------- */
+
+.progress {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+}
+
+.progress ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progress a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.progress a:hover {
+  border-color: var(--line);
+}
+
+.progress-num {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.progress .done .progress-num {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--panel);
+}
+
+.pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.pill-on {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.pill-alarm {
+  border-color: var(--alarm);
+  border-style: dashed;
+  color: var(--alarm);
+}
+
+.step-card {
+  scroll-margin-top: 72px;
+}
+
+.theme-toggle select {
+  margin-left: 4px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Catena del passo 1 ------------------------------------------------ */
+
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.chain-node {
+  flex: 1 1 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  font-size: 0.9rem;
+}
+
+.chain-detail {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.chain-state {
+  align-self: flex-start;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border: 1px solid currentColor;
+}
+
+.chain-ok {
+  border-color: var(--ok);
+}
+
+.chain-ok .chain-state {
+  color: var(--ok);
+}
+
+.chain-alarm {
+  border-color: var(--alarm);
+  border-style: dashed;
+}
+
+.chain-alarm .chain-state {
+  color: var(--alarm);
+}
+
+/* ---- Binario e grafico del passo 4 ------------------------------------- */
+
+.track {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
+  position: relative;
+  flex: 1 1 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* Il binario che unisce le tappe. */
+.stop::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: -50%;
+  width: 100%;
+  height: 3px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.stop:first-child::before {
+  display: none;
+}
+
+.stop-dot {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--muted);
+  background: var(--panel);
+  font-weight: 700;
+}
+
+.stop-value {
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+.stop-state {
+  color: var(--muted);
+}
+
+.stop-current .stop-dot {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.stop-current .stop-state {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.stop-arrived .stop-dot {
+  border-color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.stop-arrived .stop-state {
+  color: var(--ok);
+}
+
+.stop-timeout .stop-dot {
+  border-color: var(--alarm);
+  border-style: dashed;
+  background: var(--alarm-bg);
+}
+
+.stop-timeout .stop-state {
+  color: var(--alarm);
+  font-weight: 700;
+}
+
+.chart-legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.chart-legend > span {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.series-position {
+  fill: none;
+  stroke: var(--series-1);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.series-target {
+  fill: none;
+  stroke: var(--series-2);
+  stroke-width: 2;
+  stroke-dasharray: 7 4;
+}
+
+.series-dot {
+  fill: var(--series-1);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+/* ---- Log migliorato ---------------------------------------------------- */
+
+.log-header {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.log-header .row {
+  margin: 0;
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.counters > div {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+.counters > .counter-warn {
+  border-color: var(--warn);
+}
+
+.counters > .counter-alarm {
+  border-color: var(--alarm);
+  border-style: dashed;
+}
+
+.counters dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.counters dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 8px;
+  padding: 0;
+  border: none;
+}
+
+.log-paused {
+  margin: 0 0 6px;
+}
+
+.log-bytes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.byte.byte-sm {
+  min-width: 2.3em;
+  padding: 1px 3px 0;
+  border-width: 1px;
+  border-top-width: 3px;
+  border-radius: 4px;
+  cursor: default;
+}
+
+.byte-sm .byte-hex {
+  font-size: 0.85rem;
+}
+
+.byte-sm .byte-label {
+  font-size: 0.55rem;
 }

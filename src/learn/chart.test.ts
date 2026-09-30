@@ -43,3 +43,16 @@ describe('quadrante', () => {
     expect(right.y).toBeCloseTo(50)
   })
 })
+
+describe('steppedPoints', () => {
+  it('mantiene il valore fino al cambio successivo', async () => {
+    const { steppedPoints } = await import('./chart')
+    expect(steppedPoints([{ t: 0, v: 1024 }, { t: 10, v: 3072 }], 15)).toEqual([
+      { t: 0, v: 1024 },
+      { t: 10, v: 1024 },
+      { t: 10, v: 3072 },
+      { t: 15, v: 3072 },
+    ])
+    expect(steppedPoints([], 5)).toEqual([])
+  })
+})

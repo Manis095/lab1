@@ -4,6 +4,7 @@ import { type LogEntry, LogPanel } from './components/LogPanel'
 import { DiagnosticsPanel } from './components/DiagnosticsPanel'
 import { MonitorPanel } from './components/MonitorPanel'
 import { PositionPanel } from './components/PositionPanel'
+import { SequencePanel } from './components/SequencePanel'
 import { SerialConnection } from './serial/connection'
 import { Servo } from './serial/servo'
 
@@ -47,6 +48,7 @@ export default function App() {
           <ConnectPanel connection={connection} servo={servo} connected={connected} />
           <PositionPanel servo={servo} connected={connected} />
           <MonitorPanel servo={servo} connected={connected} />
+          <SequencePanel servo={servo} connected={connected} />
           <DiagnosticsPanel servo={servo} connected={connected} />
         </div>
         <LogPanel entries={log} onClear={() => setLog([])} />

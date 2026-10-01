@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controllo Servo STS</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      .pannello {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      button {
+        padding: 10px 16px;
+        font-size: 15px;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: #f4f4f4;
+      }
+      button:hover { background: #e8e8e8; }
+      .nascosto { display: none !important; }
+      #log {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 13px;
+        height: 250px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Controllo Servo STS</h1>
+
+    <!-- Sezione 1: Visibile quando disconnesso -->
+    <div id="sezione-disconnesso" class="pannello">
+      <button id="btn-connetti">Connetti Seriale</button>
+    </div>
+
+    <!-- Sezione 2: Visibile quando connesso -->
+    <div id="sezione-connesso" class="pannello nascosto" style="flex-direction: column; gap: 16px;">
+      <div style="display: flex; gap: 10px;">
+        <button id="btn-ping">Invia Ping (ID 1)</button>
+        <button id="btn-leggi-pos">Leggi Posizione Reale</button>
+        <button id="btn-disconnetti" style="color: #b30000;">Disconnetti</button>
+      </div>
+
+      <!-- Slider 0 - 360° -->
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #ddd;">
+        <label for="slider-pos" style="font-weight: bold; display: block; margin-bottom: 8px;">
+          Posizione Obiettivo: <span id="label-gradi">180.0°</span> 
+          <span style="font-weight: normal; color: #666;">(<span id="label-step">2048</span> step)</span>
+        </label>
+        <input 
+          type="range" 
+          id="slider-pos" 
+          min="0" 
+          max="4095" 
+          value="2048" 
+          style="width: 100%; cursor: pointer;" 
+        />
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
+          <span>0° (0)</span>
+          <span>180° (2048)</span>
+          <span>360° (4095)</span>
+        </div>
+      </div>
+
+      <!-- Slider Velocità -->
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #ddd; margin-top: 12px;">
+        <label for="slider-vel" style="font-weight: bold; display: block; margin-bottom: 8px;">
+          Velocità Movimento: <span id="label-vel">1000</span> step/s
+        </label>
+        <input 
+          type="range" 
+          id="slider-vel" 
+          min="100" 
+          max="3000" 
+          step="50"
+          value="1000" 
+          style="width: 100%; cursor: pointer;" 
+        />
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
+          <span>Lento (100 step/s)</span>
+          <span>Medio (1000 step/s)</span>
+          <span>Veloce (3000 step/s)</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Log eventi:</h3>
+    <div id="log">In attesa di connessione...</div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

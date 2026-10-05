@@ -7,8 +7,8 @@
     <style>
       body {
         font-family: system-ui, -apple-system, sans-serif;
-        max-width: 600px;
-        margin: 40px auto;
+        max-width: 620px;
+        margin: 30px auto;
         padding: 0 20px;
       }
       .pannello {
@@ -18,7 +18,7 @@
       }
       button {
         padding: 10px 16px;
-        font-size: 15px;
+        font-size: 14px;
         cursor: pointer;
         border-radius: 6px;
         border: 1px solid #ccc;
@@ -26,6 +26,45 @@
       }
       button:hover { background: #e8e8e8; }
       .nascosto { display: none !important; }
+
+      .box-controllo {
+        background: #f9f9f9;
+        padding: 14px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        margin-top: 12px;
+      }
+
+      .avviso-blocco {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      @keyframes lampeggio-allarme {
+        0% { background-color: #ffebee; border-color: #f44336; }
+        50% { background-color: #ff5252; border-color: #b71c1c; }
+        100% { background-color: #ffebee; border-color: #f44336; }
+      }
+      .box-telemetria {
+        background: #f9f9f9;
+        padding: 14px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        margin-top: 12px;
+      }
+      .allarme-temperatura {
+        animation: lampeggio-allarme 0.8s infinite ease-in-out;
+        color: #fff !important;
+      }
+      .allarme-temperatura * {
+        color: inherit !important;
+      }
+
       #log {
         background: #1e1e1e;
         color: #d4d4d4;
@@ -33,7 +72,7 @@
         border-radius: 6px;
         font-family: monospace;
         font-size: 13px;
-        height: 250px;
+        height: 220px;
         overflow-y: auto;
         white-space: pre-wrap;
       }
@@ -42,21 +81,59 @@
   <body>
     <h1>Controllo Servo STS</h1>
 
-    <!-- Sezione 1: Visibile quando disconnesso -->
+    <!-- Sezione 1: Disconnesso -->
     <div id="sezione-disconnesso" class="pannello">
       <button id="btn-connetti">Connetti Seriale</button>
     </div>
 
-    <!-- Sezione 2: Visibile quando connesso -->
-    <div id="sezione-connesso" class="pannello nascosto" style="flex-direction: column; gap: 16px;">
-      <div style="display: flex; gap: 10px;">
+    <!-- Sezione 2: Connesso -->
+    <div id="sezione-connesso" class="pannello nascosto" style="flex-direction: column;">
+      
+      <!-- Riga pulsanti base -->
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button id="btn-ping">Invia Ping (ID 1)</button>
         <button id="btn-leggi-pos">Leggi Posizione Reale</button>
         <button id="btn-disconnetti" style="color: #b30000;">Disconnetti</button>
       </div>
 
-      <!-- Slider 0 - 360° -->
-      <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #ddd;">
+      <!-- Controllo Coppia (Torque Enable) -->
+      <div style="display: flex; gap: 10px; margin-top: 12px;">
+        <button id="btn-coppia-on">Abilita lock</button>
+        <button id="btn-coppia-off">Disabilita lock</button>
+        <span id="stato-coppia" style="font-size: 14px; font-weight: bold; margin-left: 8px;">
+          🔒 Stato: Sconosciuto
+        </span>
+      </div>
+
+      <!-- Blocco Telemetria Integrata (carico e temperatura) -->
+      <div id="blocco-telemetria" class="box-telemetria">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <div>
+            <span style="font-weight: bold;">Carico Attuale:</span>
+            <span id="label-carico" style="font-size: 18px; font-weight: bold; margin-left: 6px;">0</span>
+          </div>
+          <div>
+            <span style="font-weight: bold;">Temperatura:</span>
+            <span id="label-temp" style="font-size: 18px; font-weight: bold; margin-left: 6px;">-- °C</span>
+          </div>
+        </div>
+
+        <!-- Indicatore grafico del carico applicato a mano -->
+        <div style="background: #e0e0e0; border-radius: 4px; height: 10px; overflow: hidden; margin-bottom: 12px;">
+          <div id="barra-carico" style="background: #1976d2; height: 100%; width: 0%; transition: width 0.1s linear;"></div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button id="btn-leggi-telemetria">Leggi Telemetria</button>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox" id="chk-auto-telemetria" />
+            Lettura continua (300ms)
+          </label>
+        </div>
+      </div>
+
+      <!-- Slider Posizione -->
+      <div class="box-controllo">
         <label for="slider-pos" style="font-weight: bold; display: block; margin-bottom: 8px;">
           Posizione Obiettivo: <span id="label-gradi">180.0°</span> 
           <span style="font-weight: normal; color: #666;">(<span id="label-step">2048</span> step)</span>
@@ -77,7 +154,7 @@
       </div>
 
       <!-- Slider Velocità -->
-      <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #ddd; margin-top: 12px;">
+      <div class="box-controllo">
         <label for="slider-vel" style="font-weight: bold; display: block; margin-bottom: 8px;">
           Velocità Movimento: <span id="label-vel">1000</span> step/s
         </label>
@@ -91,14 +168,15 @@
           style="width: 100%; cursor: pointer;" 
         />
         <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
-          <span>Lento (100 step/s)</span>
-          <span>Medio (1000 step/s)</span>
-          <span>Veloce (3000 step/s)</span>
+          <span>Lento (100)</span>
+          <span>Medio (1000)</span>
+          <span>Veloce (3000)</span>
         </div>
       </div>
+
     </div>
 
-    <h3>Log eventi:</h3>
+    <h3 style="margin-top: 24px;">Log eventi:</h3>
     <div id="log">In attesa di connessione...</div>
 
     <script type="module" src="/src/main.ts"></script>

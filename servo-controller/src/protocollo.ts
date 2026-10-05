@@ -155,3 +155,7 @@ export function creaPacchettoPosizioneVelocita(
   // Istruzione 0x03 (scrittura), registro di partenza 0x2A (42), seguito dai 6 byte
   return creaPacchetto(id, 0x03, [0x2A, pBasso, pAlto, tBasso, tAlto, vBasso, vAlto]);
 }
+
+export function creaPacchettoScrittura8(id: number, registro: number, valore: number): Uint8Array {
+  return creaPacchetto(id, 0x03, [registro, valore & 0xFF]);
+}

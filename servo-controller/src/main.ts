@@ -1,7 +1,7 @@
 import { GestoreSeriale } from './seriale';
 import { 
   creaPacchetto, 
-  creaPacchettoScrittura16, 
+  creaPacchettoScrittura8,
   creaPacchettoLettura,
   creaPacchettoPosizioneVelocita,
   decodifica16, 
@@ -11,7 +11,6 @@ import {
 
 const seriale = new GestoreSeriale();
 
-// Elementi della UI
 const sezDisconnesso = document.getElementById('sezione-disconnesso') as HTMLDivElement;
 const sezConnesso = document.getElementById('sezione-connesso') as HTMLDivElement;
 const btnConnetti = document.getElementById('btn-connetti') as HTMLButtonElement;
@@ -25,7 +24,31 @@ const labelStep = document.getElementById('label-step') as HTMLSpanElement;
 const sliderVel = document.getElementById('slider-vel') as HTMLInputElement;
 const labelVel = document.getElementById('label-vel') as HTMLSpanElement;
 
-// Aggiorna l'etichetta al trascinamento
+const btnCoppiaOn = document.getElementById('btn-coppia-on') as HTMLButtonElement;
+const btnCoppiaOff = document.getElementById('btn-coppia-off') as HTMLButtonElement;
+const statoCoppiaSpan = document.getElementById('stato-coppia') as HTMLSpanElement;
+
+const labelCarico = document.getElementById('label-carico') as HTMLSpanElement;
+const barraCarico = document.getElementById('barra-carico') as HTMLDivElement;
+const labelTemp = document.getElementById('label-temp') as HTMLSpanElement;
+const bloccoTelemetria = document.getElementById('blocco-telemetria') as HTMLDivElement;
+const btnLeggiTelemetria = document.getElementById('btn-leggi-telemetria') as HTMLButtonElement;
+const chkAutoTelemetria = document.getElementById('chk-auto-telemetria') as HTMLInputElement;
+
+let timerTelemetria: number | null = null;
+let ultimoRegistro1ByteRichiesto: number | null = null;
+const SOGLIA_TEMPERATURA_CRITICA = 60;
+
+function aggiornaIconaLock(attivo: boolean) {
+  if (attivo) {
+    statoCoppiaSpan.textContent = '🔒 Lock Attivo';
+    statoCoppiaSpan.style.color = '#2e7d32';
+  } else {
+    statoCoppiaSpan.textContent = '🔓 Lock Disattivato';
+    statoCoppiaSpan.style.color = '#d32f2f';
+  }
+}
+
 sliderVel.addEventListener('input', () => {
   labelVel.textContent = sliderVel.value;
 });
@@ -36,43 +59,96 @@ function scriviLog(messaggio: string) {
   logDiv.scrollTop = logDiv.scrollHeight;
 }
 
-// Callback quando arriva un pacchetto valido dal parser
 seriale.onPacchettoRicevuto = (pacchetto) => {
   scriviLog(`<- RX [${toHex(pacchetto.byteGrezzi)}]`);
-  
-  // Se arrivano 2 byte di dati, è la risposta alla lettura di posizione (o registro a 16 bit)
-  if (pacchetto.dati.length === 2) {
+
+  if (pacchetto.dati.length === 4) {
+    const caricoGrezzo = decodifica16(pacchetto.dati[0], pacchetto.dati[1]);
+    const caricoEffettivo = caricoGrezzo & 0x03FF;
+    const temp = pacchetto.dati[3];
+
+    labelCarico.textContent = `${caricoEffettivo}`;
+    const percentualeCarico = Math.min(100, Math.round((caricoEffettivo / 1000) * 100));
+    barraCarico.style.width = `${percentualeCarico}%`;
+
+    labelTemp.textContent = `${temp} °C`;
+
+    if (temp >= SOGLIA_TEMPERATURA_CRITICA) {
+      bloccoTelemetria.classList.add('allarme-temperatura');
+    } else {
+      bloccoTelemetria.classList.remove('allarme-temperatura');
+    }
+
+    scriviLog(`   -> CARICO: ${caricoEffettivo} | TEMP: ${temp} °C`);
+  } else if (pacchetto.dati.length === 2) {
     const stepReali = decodifica16(pacchetto.dati[0], pacchetto.dati[1]);
     const gradiReali = stepInGradi(stepReali);
-    scriviLog(`   -> POSIZIONE REALE: ${gradiReali}° (${stepReali} step)`);
+    scriviLog(`   -> POSIZIONE: ${gradiReali}° (${stepReali} step)`);
+  } else if (pacchetto.dati.length === 1) {
+    const valore = pacchetto.dati[0];
+    if (ultimoRegistro1ByteRichiesto === 0x28) {
+      aggiornaIconaLock(valore === 1);
+      scriviLog(`   -> STATO LOCK: ${valore === 1 ? 'Attivo' : 'Disattivato'}`);
+    } else {
+      labelTemp.textContent = `${valore} °C`;
+      scriviLog(`   -> TEMPERATURA: ${valore} °C`);
+
+      if (valore >= SOGLIA_TEMPERATURA_CRITICA) {
+        bloccoTelemetria.classList.add('allarme-temperatura');
+      } else {
+        bloccoTelemetria.classList.remove('allarme-temperatura');
+      }
+    }
   } else {
-    scriviLog(`   -> ID: ${pacchetto.id} | Stato: 0x${pacchetto.stato.toString(16).padStart(2, '0')} | Dati: [${toHex(pacchetto.dati)}]`);
+    scriviLog(`   -> ID: ${pacchetto.id} | Stato: 0x${pacchetto.stato.toString(16).padStart(2, '0')}`);
   }
 
   if (pacchetto.stato !== 0) {
-    scriviLog(`   -> ATTENZIONE: Anomalia nel byte di stato (0x${pacchetto.stato.toString(16)})`);
+    scriviLog(`   -> ATTENZIONE: Anomalia byte stato (0x${pacchetto.stato.toString(16)})`);
   }
 };
 
-// Click su Connetti
+async function richiediTelemetria() {
+  try {
+    const p = creaPacchettoLettura(0x01, 0x3C, 4);
+    await seriale.invia(p);
+  } catch (err: any) {
+    scriviLog(`Errore telemetria: ${err.message}`);
+  }
+}
+
+btnLeggiTelemetria.addEventListener('click', () => {
+  richiediTelemetria();
+});
+
+chkAutoTelemetria.addEventListener('change', () => {
+  if (chkAutoTelemetria.checked) {
+    timerTelemetria = window.setInterval(richiediTelemetria, 300);
+  } else if (timerTelemetria !== null) {
+    clearInterval(timerTelemetria);
+    timerTelemetria = null;
+  }
+});
+
 btnConnetti.addEventListener('click', async () => {
   try {
     scriviLog("Apertura finestra di selezione porta...");
     await seriale.connetti();
     scriviLog("Porta aperta con successo a 1 Mbit/s.");
 
-    // Alterniamo i pulsanti visibili
     sezDisconnesso.classList.add('nascosto');
     sezConnesso.classList.remove('nascosto');
+
+    ultimoRegistro1ByteRichiesto = 0x28;
+    const reqCoppia = creaPacchettoLettura(0x01, 0x28, 1);
+    await seriale.invia(reqCoppia);
   } catch (err: any) {
     scriviLog(`Errore di connessione: ${err.message}`);
   }
 });
 
-// Click su Invia Ping
 btnPing.addEventListener('click', async () => {
   try {
-    // Ping al Servo 1: Istruzione 0x01
     const ping = creaPacchetto(0x01, 0x01);
     scriviLog(`-> TX [${toHex(ping)}] (Ping Servo 1)`);
     await seriale.invia(ping);
@@ -81,13 +157,20 @@ btnPing.addEventListener('click', async () => {
   }
 });
 
-// Click su Disconnetti
 btnDisconnetti.addEventListener('click', async () => {
   try {
+    if (timerTelemetria !== null) {
+      clearInterval(timerTelemetria);
+      timerTelemetria = null;
+      chkAutoTelemetria.checked = false;
+    }
+
+    statoCoppiaSpan.textContent = '🔒 Stato: Sconosciuto';
+    statoCoppiaSpan.style.color = 'inherit';
+
     await seriale.disconnetti();
     scriviLog("Porta chiusa correttamente.");
 
-    // Ripristiniamo i pulsanti iniziali
     sezConnesso.classList.add('nascosto');
     sezDisconnesso.classList.remove('nascosto');
   } catch (err: any) {
@@ -95,14 +178,12 @@ btnDisconnetti.addEventListener('click', async () => {
   }
 });
 
-// Invio della posizione al rilascio dello slider (evento 'change')
 sliderPos.addEventListener('change', async () => {
   const step = parseInt(sliderPos.value, 10);
   const vel = parseInt(sliderVel.value, 10);
   const gradi = stepInGradi(step);
 
   try {
-    // Scrittura combinata Posizione + Tempo (0) + Velocità
     const pacchettoScrittura = creaPacchettoPosizioneVelocita(0x01, step, vel, 0);
     scriviLog(`-> TX [${toHex(pacchettoScrittura)}] (Pos: ${gradi}°, Vel: ${vel} step/s)`);
     await seriale.invia(pacchettoScrittura);
@@ -111,14 +192,12 @@ sliderPos.addEventListener('change', async () => {
   }
 });
 
-// Aggiornamento live delle etichette mentre trascini lo slider
 sliderPos.addEventListener('input', () => {
   const step = parseInt(sliderPos.value, 10);
   labelStep.textContent = step.toString();
   labelGradi.textContent = `${stepInGradi(step)}°`;
 });
 
-// Lettura della posizione corrente dal registro 56 (0x38), 2 byte
 btnLeggiPos.addEventListener('click', async () => {
   try {
     const pacchettoLettura = creaPacchettoLettura(0x01, 0x38, 2);
@@ -126,5 +205,27 @@ btnLeggiPos.addEventListener('click', async () => {
     await seriale.invia(pacchettoLettura);
   } catch (err: any) {
     scriviLog(`Errore lettura posizione: ${err.message}`);
+  }
+});
+
+btnCoppiaOn.addEventListener('click', async () => {
+  try {
+    const p = creaPacchettoScrittura8(0x01, 0x28, 1);
+    scriviLog(`-> TX [${toHex(p)}] (Abilita lock)`);
+    await seriale.invia(p);
+    aggiornaIconaLock(true);
+  } catch (err: any) {
+    scriviLog(`Errore: ${err.message}`);
+  }
+});
+
+btnCoppiaOff.addEventListener('click', async () => {
+  try {
+    const p = creaPacchettoScrittura8(0x01, 0x28, 0);
+    scriviLog(`-> TX [${toHex(p)}] (Disabilita lock)`);
+    await seriale.invia(p);
+    aggiornaIconaLock(false);
+  } catch (err: any) {
+    scriviLog(`Errore: ${err.message}`);
   }
 });

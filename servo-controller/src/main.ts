@@ -1,4 +1,6 @@
-import { GestoreSeriale } from './seriale';
+import { seriale, scriviLog } from './contesto';
+import './lab2';
+
 import { 
   creaPacchetto, 
   creaPacchettoScrittura8,
@@ -9,14 +11,11 @@ import {
   toHex 
 } from './protocollo';
 
-const seriale = new GestoreSeriale();
-
 const sezDisconnesso = document.getElementById('sezione-disconnesso') as HTMLDivElement;
 const sezConnesso = document.getElementById('sezione-connesso') as HTMLDivElement;
 const btnConnetti = document.getElementById('btn-connetti') as HTMLButtonElement;
 const btnPing = document.getElementById('btn-ping') as HTMLButtonElement;
 const btnDisconnetti = document.getElementById('btn-disconnetti') as HTMLButtonElement;
-const logDiv = document.getElementById('log') as HTMLDivElement;
 const btnLeggiPos = document.getElementById('btn-leggi-pos') as HTMLButtonElement;
 const sliderPos = document.getElementById('slider-pos') as HTMLInputElement;
 const labelGradi = document.getElementById('label-gradi') as HTMLSpanElement;
@@ -52,12 +51,6 @@ function aggiornaIconaLock(attivo: boolean) {
 sliderVel.addEventListener('input', () => {
   labelVel.textContent = sliderVel.value;
 });
-
-function scriviLog(messaggio: string) {
-  const orario = new Date().toLocaleTimeString();
-  logDiv.textContent += `\n[${orario}] ${messaggio}`;
-  logDiv.scrollTop = logDiv.scrollHeight;
-}
 
 seriale.onPacchettoRicevuto = (pacchetto) => {
   scriviLog(`<- RX [${toHex(pacchetto.byteGrezzi)}]`);

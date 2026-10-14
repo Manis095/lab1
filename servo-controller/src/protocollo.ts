@@ -138,12 +138,20 @@ export function gradiInStep(gradi: number): number {
  * @param tempo Tempo di percorrenza in ms (default 0 = usa solo la velocità)
  */
 export function creaPacchettoPosizioneVelocita(
-  id: number,
-  posizione: number,
-  velocita: number,
-  tempo: number = 0
+    id: number,
+    posizione: number,
+    velocita: number,
+    tempo: number = 0
 ): Uint8Array {
-  const pBasso = posizione & 0xFF;
+    // Difesa contro NaN e valori fuori scala: l'operatore & trasformerebbe NaN in 0 (un comando "valido"!)
+    if (!Number.isFinite(posizione) || !Number.isFinite(velocita) || !Number.isFinite(tempo)) {
+        throw new Error(`Comando non valido: posizione=${posizione}, velocita=${velocita}, tempo=${tempo}`);
+    }
+    posizione = Math.max(0, Math.min(4095, Math.round(posizione)));
+    velocita = Math.max(0, Math.min(4095, Math.round(velocita)));
+    tempo = Math.max(0, Math.min(65535, Math.round(tempo)));
+
+    const pBasso = posizione & 0xFF;
   const pAlto = (posizione >> 8) & 0xFF;
 
   const tBasso = tempo & 0xFF;

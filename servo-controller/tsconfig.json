@@ -2,11 +2,11 @@
   "compilerOptions": {
     "target": "es2023",
     "module": "esnext",
-    "lib": ["ES2023", "DOM"],
-    "types": ["vite/client"],
+    "lib": [ "ES2023", "DOM" ],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
-    "types": ["@types/w3c-web-serial"],
+    "types": [ "vite/client", "w3c-web-serial" ],
+    "strict": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",

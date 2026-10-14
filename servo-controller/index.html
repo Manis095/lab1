@@ -88,91 +88,137 @@
 
     <!-- Sezione 2: Connesso -->
     <div id="sezione-connesso" class="pannello nascosto" style="flex-direction: column;">
-      
-      <!-- Riga pulsanti base -->
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button id="btn-ping">Invia Ping (ID 1)</button>
-        <button id="btn-leggi-pos">Leggi Posizione Reale</button>
-        <button id="btn-disconnetti" style="color: #b30000;">Disconnetti</button>
-      </div>
 
-      <!-- Controllo Coppia (Torque Enable) -->
-      <div style="display: flex; gap: 10px; margin-top: 12px;">
-        <button id="btn-coppia-on">Abilita lock</button>
-        <button id="btn-coppia-off">Disabilita lock</button>
-        <span id="stato-coppia" style="font-size: 14px; font-weight: bold; margin-left: 8px;">
-          🔒 Stato: Sconosciuto
-        </span>
-      </div>
-
-      <!-- Blocco Telemetria Integrata (carico e temperatura) -->
-      <div id="blocco-telemetria" class="box-telemetria">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <div>
-            <span style="font-weight: bold;">Carico Attuale:</span>
-            <span id="label-carico" style="font-size: 18px; font-weight: bold; margin-left: 6px;">0</span>
-          </div>
-          <div>
-            <span style="font-weight: bold;">Temperatura:</span>
-            <span id="label-temp" style="font-size: 18px; font-weight: bold; margin-left: 6px;">-- °C</span>
-          </div>
+        <!-- Riga pulsanti base -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="btn-ping">Invia Ping (ID 1)</button>
+            <button id="btn-leggi-pos">Leggi Posizione Reale</button>
+            <button id="btn-disconnetti" style="color: #b30000;">Disconnetti</button>
         </div>
 
-        <!-- Indicatore grafico del carico applicato a mano -->
-        <div style="background: #e0e0e0; border-radius: 4px; height: 10px; overflow: hidden; margin-bottom: 12px;">
-          <div id="barra-carico" style="background: #1976d2; height: 100%; width: 0%; transition: width 0.1s linear;"></div>
+        <!-- Controllo Coppia (Torque Enable) -->
+        <div style="display: flex; gap: 10px; margin-top: 12px;">
+            <button id="btn-coppia-on">Abilita lock</button>
+            <button id="btn-coppia-off">Disabilita lock</button>
+            <span id="stato-coppia" style="font-size: 14px; font-weight: bold; margin-left: 8px;">
+                🔒 Stato: Sconosciuto
+            </span>
         </div>
 
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <button id="btn-leggi-telemetria">Leggi Telemetria</button>
-          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
-            <input type="checkbox" id="chk-auto-telemetria" />
-            Lettura continua (300ms)
-          </label>
-        </div>
-      </div>
+        <!-- Blocco Telemetria Integrata (carico e temperatura) -->
+        <div id="blocco-telemetria" class="box-telemetria">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div>
+                    <span style="font-weight: bold;">Carico Attuale:</span>
+                    <span id="label-carico" style="font-size: 18px; font-weight: bold; margin-left: 6px;">0</span>
+                </div>
+                <div>
+                    <span style="font-weight: bold;">Temperatura:</span>
+                    <span id="label-temp" style="font-size: 18px; font-weight: bold; margin-left: 6px;">-- °C</span>
+                </div>
+            </div>
 
-      <!-- Slider Posizione -->
-      <div class="box-controllo">
-        <label for="slider-pos" style="font-weight: bold; display: block; margin-bottom: 8px;">
-          Posizione Obiettivo: <span id="label-gradi">180.0°</span> 
-          <span style="font-weight: normal; color: #666;">(<span id="label-step">2048</span> step)</span>
-        </label>
-        <input 
-          type="range" 
-          id="slider-pos" 
-          min="0" 
-          max="4095" 
-          value="2048" 
-          style="width: 100%; cursor: pointer;" 
-        />
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
-          <span>0° (0)</span>
-          <span>180° (2048)</span>
-          <span>360° (4095)</span>
-        </div>
-      </div>
+            <!-- Indicatore grafico del carico applicato a mano -->
+            <div style="background: #e0e0e0; border-radius: 4px; height: 10px; overflow: hidden; margin-bottom: 12px;">
+                <div id="barra-carico" style="background: #1976d2; height: 100%; width: 0%; transition: width 0.1s linear;"></div>
+            </div>
 
-      <!-- Slider Velocità -->
-      <div class="box-controllo">
-        <label for="slider-vel" style="font-weight: bold; display: block; margin-bottom: 8px;">
-          Velocità Movimento: <span id="label-vel">1000</span> step/s
-        </label>
-        <input 
-          type="range" 
-          id="slider-vel" 
-          min="100" 
-          max="3000" 
-          step="50"
-          value="1000" 
-          style="width: 100%; cursor: pointer;" 
-        />
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
-          <span>Lento (100)</span>
-          <span>Medio (1000)</span>
-          <span>Veloce (3000)</span>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button id="btn-leggi-telemetria">Leggi Telemetria</button>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                    <input type="checkbox" id="chk-auto-telemetria" />
+                    Lettura continua (300ms)
+                </label>
+            </div>
         </div>
-      </div>
+
+        <!-- Slider Posizione -->
+        <div class="box-controllo">
+            <label for="slider-pos" style="font-weight: bold; display: block; margin-bottom: 8px;">
+                Posizione Obiettivo: <span id="label-gradi">180.0°</span>
+                <span style="font-weight: normal; color: #666;">(<span id="label-step">2048</span> step)</span>
+            </label>
+            <input type="range"
+                   id="slider-pos"
+                   min="0"
+                   max="4095"
+                   value="2048"
+                   style="width: 100%; cursor: pointer;" />
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
+                <span>0° (0)</span>
+                <span>180° (2048)</span>
+                <span>360° (4095)</span>
+            </div>
+        </div>
+
+        <!-- Slider Velocità -->
+        <div class="box-controllo">
+            <label for="slider-vel" style="font-weight: bold; display: block; margin-bottom: 8px;">
+                Velocità Movimento: <span id="label-vel">1000</span> step/s
+            </label>
+            <input type="range"
+                   id="slider-vel"
+                   min="100"
+                   max="3000"
+                   step="50"
+                   value="1000"
+                   style="width: 100%; cursor: pointer;" />
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
+                <span>Lento (100)</span>
+                <span>Medio (1000)</span>
+                <span>Veloce (3000)</span>
+            </div>
+        </div>
+
+        <!-- ============ LAB 2: due servo coordinati ============ -->
+        <div class="box-controllo" id="pannello-lab2">
+            <h2 style="margin-top: 0;">Lab 2: manipolatore 2R</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <button id="btn-l2-init">Inizializza i 2 servo</button>
+                <button id="btn-l2-zero">Imposta zero qui</button>
+                <label>
+                    verso servo 1
+                    <select id="sel-verso-1"><option value="1">+1</option><option value="-1">-1</option></select>
+                </label>
+                <label>
+                    verso servo 2
+                    <select id="sel-verso-2"><option value="1">+1</option><option value="-1">-1</option></select>
+                </label>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
+                <button id="btn-l2-cerca">Cerca servo sul bus</button>
+                <label>ID attuale <input type="number" id="in-id-vecchio" value="1" style="width: 50px;" /></label>
+                <label>nuovo ID <input type="number" id="in-id-nuovo" value="2" style="width: 50px;" /></label>
+                <button id="btn-l2-cambia-id">Cambia ID</button>
+            </div>
+            <label style="display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px;">
+                <input type="checkbox" id="chk-l2-lettura" /> Lettura continua dei 2 servo (200 ms)
+            </label>
+            <div id="label-l2-stato" style="font-size: 13px; margin-top: 6px;">-</div>
+
+            <h3>Obiettivo minimo: vai a un punto</h3>
+            <label>x (mm) <input type="number" id="in-x" value="150" style="width: 70px;" /></label>
+            <label>y (mm) <input type="number" id="in-y" value="50" style="width: 70px;" /></label>
+            <button id="btn-l2-vai">Vai e misura l'errore</button>
+
+            <h3>Obiettivo completo: circonferenza</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <label>centro x <input type="number" id="in-cx" value="150" style="width: 70px;" /></label>
+                <label>centro y <input type="number" id="in-cy" value="0" style="width: 70px;" /></label>
+                <label>raggio <input type="number" id="in-r" value="30" style="width: 70px;" /></label>
+                <label>durata (s) <input type="number" id="in-durata" value="6" style="width: 60px;" /></label>
+                <label>
+                    legge oraria
+                    <select id="sel-legge"><option value="raccordo">raccordata</option><option value="lineare">lineare</option></select>
+                </label>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="btn-l2-cerchio">Disegna</button>
+                <button id="btn-l2-ferma" style="color: #b30000;">Ferma</button>
+                <button id="btn-l2-csv">Esporta CSV</button>
+            </div>
+            <div id="label-l2-info" style="font-size: 13px; margin-top: 8px;">-</div>
+        </div>
 
     </div>
 

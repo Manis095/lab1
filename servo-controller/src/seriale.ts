@@ -1,13 +1,35 @@
+/// <reference types="w3c-web-serial" />
 import { ParserSTS, type RispostaServo } from './protocollo';
 
+type Ascoltatore = (pacchetto: RispostaServo) => boolean | void;
+
 export class GestoreSeriale {
-  private porta: SerialPort | null = null;
-  private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-  private inLettura = false;
-  private parser = new ParserSTS();
+    private porta: SerialPort | null = null;
+    private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    private inLettura = false;
+    private parser = new ParserSTS();
 
   // Callback richiamata ogni volta che il parser riconosce un pacchetto valido
   public onPacchettoRicevuto: ((pacchetto: RispostaServo) => void) | null = null;
+
+    // Ascoltatori "prioritari" (es. il Bus del Lab 2). Se uno restituisce true, il pacchetto è
+    // stato consumato e NON arriva a onPacchettoRicevuto.
+    private ascoltatori: Ascoltatore[] = [];
+
+    public aggiungiAscoltatore(ascoltatore: Ascoltatore): void {
+        this.ascoltatori.push(ascoltatore);
+    }
+
+    // Consegna un pacchetto agli ascoltatori, e se nessuno lo consuma al vecchio callback
+    private smista(pacchetto: RispostaServo): void {
+        let consumato = false;
+        for (const ascoltatore of this.ascoltatori) {
+            if (ascoltatore(pacchetto) === true) consumato = true;
+        }
+        if (!consumato && this.onPacchettoRicevuto) {
+            this.onPacchettoRicevuto(pacchetto);
+        }
+    }
 
   // Chiede all'utente di selezionare la porta e la apre a 1 Mbit/s
   public async connetti(): Promise<void> {
@@ -40,11 +62,9 @@ export class GestoreSeriale {
         if (value) {
           // Alimentiamo il parser con il frammento ricevuto
           const pacchetti = this.parser.alimenta(value);
-          for (const pacchetto of pacchetti) {
-            if (this.onPacchettoRicevuto) {
-              this.onPacchettoRicevuto(pacchetto);
+            for (const pacchetto of pacchetti) {
+                this.smista(pacchetto);
             }
-          }
         }
       }
     } catch (err) {

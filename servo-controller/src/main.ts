@@ -11,6 +11,8 @@ import {
 
 const seriale = new GestoreSeriale();
 
+// I controlli vengono cercati una sola volta all'avvio e poi riutilizzati
+// dagli handler. La pagina deve quindi contenere tutti questi elementi.
 const sezDisconnesso = document.getElementById('sezione-disconnesso') as HTMLDivElement;
 const sezConnesso = document.getElementById('sezione-connesso') as HTMLDivElement;
 const btnConnetti = document.getElementById('btn-connetti') as HTMLButtonElement;
@@ -35,10 +37,18 @@ const bloccoTelemetria = document.getElementById('blocco-telemetria') as HTMLDiv
 const btnLeggiTelemetria = document.getElementById('btn-leggi-telemetria') as HTMLButtonElement;
 const chkAutoTelemetria = document.getElementById('chk-auto-telemetria') as HTMLInputElement;
 
+// Il timer viene conservato per poter interrompere la lettura ciclica quando
+// l'utente disattiva l'opzione o chiude la connessione.
 let timerTelemetria: number | null = null;
+
+// Le risposte con un solo byte possono rappresentare registri diversi
+// (temperatura o torque/lock). Questo valore permette di interpretarle
+// sapendo quale richiesta le ha generate.
 let ultimoRegistro1ByteRichiesto: number | null = null;
 const SOGLIA_TEMPERATURA_CRITICA = 60;
 
+// Aggiorna sia il testo sia il colore dello stato del torque enable, così
+// i due pulsanti e la risposta seriale mostrano sempre lo stesso stato.
 function aggiornaIconaLock(attivo: boolean) {
   if (attivo) {
     statoCoppiaSpan.textContent = '🔒 Lock Attivo';
@@ -53,6 +63,8 @@ sliderVel.addEventListener('input', () => {
   labelVel.textContent = sliderVel.value;
 });
 
+// Il log è volutamente testuale: oltre a essere leggibile dall'utente,
+// conserva in pagina i pacchetti TX/RX e gli eventuali errori.
 function scriviLog(messaggio: string) {
   const orario = new Date().toLocaleTimeString();
   logDiv.textContent += `\n[${orario}] ${messaggio}`;
@@ -62,11 +74,16 @@ function scriviLog(messaggio: string) {
 seriale.onPacchettoRicevuto = (pacchetto) => {
   scriviLog(`<- RX [${toHex(pacchetto.byteGrezzi)}]`);
 
+  // La lunghezza dei dati identifica il tipo di risposta attesa dalle
+  // richieste usate dall'interfaccia: telemetria, posizione o un registro
+  // singolo. I byte arrivano già verificati dal parser del protocollo.
   if (pacchetto.dati.length === 4) {
     const caricoGrezzo = decodifica16(pacchetto.dati[0], pacchetto.dati[1]);
     const caricoEffettivo = caricoGrezzo & 0x03FF;
     const temp = pacchetto.dati[3];
 
+    // Il carico STS è rappresentato su 10 bit; gli altri bit non fanno
+    // parte del valore visualizzato e vengono quindi rimossi con una mask.
     labelCarico.textContent = `${caricoEffettivo}`;
     const percentualeCarico = Math.min(100, Math.round((caricoEffettivo / 1000) * 100));
     barraCarico.style.width = `${percentualeCarico}%`;
@@ -87,6 +104,7 @@ seriale.onPacchettoRicevuto = (pacchetto) => {
   } else if (pacchetto.dati.length === 1) {
     const valore = pacchetto.dati[0];
     if (ultimoRegistro1ByteRichiesto === 0x28) {
+      // Il registro 0x28 contiene il torque enable: 1 significa lock attivo.
       aggiornaIconaLock(valore === 1);
       scriviLog(`   -> STATO LOCK: ${valore === 1 ? 'Attivo' : 'Disattivato'}`);
     } else {
@@ -108,6 +126,8 @@ seriale.onPacchettoRicevuto = (pacchetto) => {
   }
 };
 
+// Richiede in un'unica risposta carico e temperatura. Questa funzione viene
+// usata sia dal pulsante manuale sia dal timer della modalità automatica.
 async function richiediTelemetria() {
   try {
     const p = creaPacchettoLettura(0x01, 0x3C, 4);
@@ -123,6 +143,8 @@ btnLeggiTelemetria.addEventListener('click', () => {
 
 chkAutoTelemetria.addEventListener('change', () => {
   if (chkAutoTelemetria.checked) {
+    // 300 ms è un compromesso tra aggiornamento fluido dell'interfaccia e
+    // numero di richieste inviate sul bus seriale.
     timerTelemetria = window.setInterval(richiediTelemetria, 300);
   } else if (timerTelemetria !== null) {
     clearInterval(timerTelemetria);
@@ -139,6 +161,8 @@ btnConnetti.addEventListener('click', async () => {
     sezDisconnesso.classList.add('nascosto');
     sezConnesso.classList.remove('nascosto');
 
+    // Alla connessione leggiamo subito il torque enable per sostituire lo
+    // stato iniziale "Sconosciuto" con quello reale del servo.
     ultimoRegistro1ByteRichiesto = 0x28;
     const reqCoppia = creaPacchettoLettura(0x01, 0x28, 1);
     await seriale.invia(reqCoppia);
@@ -159,6 +183,8 @@ btnPing.addEventListener('click', async () => {
 
 btnDisconnetti.addEventListener('click', async () => {
   try {
+    // Il timer non deve continuare a generare richieste mentre la porta viene
+    // chiusa; lo fermiamo prima di rilasciare la connessione seriale.
     if (timerTelemetria !== null) {
       clearInterval(timerTelemetria);
       timerTelemetria = null;
@@ -184,6 +210,8 @@ sliderPos.addEventListener('change', async () => {
   const gradi = stepInGradi(step);
 
   try {
+    // Il comando viene inviato solo al rilascio dello slider (`change`),
+    // evitando di spedire un pacchetto per ogni pixel trascinato.
     const pacchettoScrittura = creaPacchettoPosizioneVelocita(0x01, step, vel, 0);
     scriviLog(`-> TX [${toHex(pacchettoScrittura)}] (Pos: ${gradi}°, Vel: ${vel} step/s)`);
     await seriale.invia(pacchettoScrittura);
@@ -194,6 +222,8 @@ sliderPos.addEventListener('change', async () => {
 
 sliderPos.addEventListener('input', () => {
   const step = parseInt(sliderPos.value, 10);
+  // Durante il trascinamento aggiorniamo solo l'anteprima; il servo riceverà
+  // il valore definitivo nell'handler `change` qui sopra.
   labelStep.textContent = step.toString();
   labelGradi.textContent = `${stepInGradi(step)}°`;
 });

@@ -3,18 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Controllo Servo STS</title>
+    <title>Simulatore Braccio 2R & Controllo STS</title>
     <style>
       body {
         font-family: system-ui, -apple-system, sans-serif;
-        max-width: 620px;
-        margin: 30px auto;
+        max-width: 860px;
+        margin: 20px auto;
         padding: 0 20px;
       }
       .pannello {
         display: flex;
         gap: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
       }
       button {
         padding: 10px 16px;
@@ -33,16 +33,6 @@
         border-radius: 6px;
         border: 1px solid #ddd;
         margin-top: 12px;
-      }
-
-      .avviso-blocco {
-        background-color: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeeba;
-        padding: 10px 14px;
-        border-radius: 6px;
-        font-size: 13px;
-        line-height: 1.4;
       }
 
       @keyframes lampeggio-allarme {
@@ -65,6 +55,33 @@
         color: inherit !important;
       }
 
+      .canvas-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #1e1e1e;
+        border-radius: 8px;
+        padding: 14px;
+        margin-top: 16px;
+      }
+
+      canvas {
+        background: #121212;
+        border: 1px solid #333;
+        border-radius: 6px;
+        cursor: crosshair;
+      }
+
+      .info-simulatore {
+        color: #00ffcc;
+        font-family: monospace;
+        font-size: 14px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
       #log {
         background: #1e1e1e;
         color: #d4d4d4;
@@ -72,112 +89,173 @@
         border-radius: 6px;
         font-family: monospace;
         font-size: 13px;
-        height: 220px;
+        height: 160px;
         overflow-y: auto;
         white-space: pre-wrap;
+      }
+
+      .griglia-doppia {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
       }
     </style>
   </head>
   <body>
-    <h1>Controllo Servo STS</h1>
+    <h1>Controllo Servo STS & Simulatore 2R</h1>
 
-    <!-- Sezione 1: Disconnesso -->
+    <!-- Sezione iniziale -->
     <div id="sezione-disconnesso" class="pannello">
-      <button id="btn-connetti">Connetti Seriale</button>
+      <button id="btn-connetti">Connetti Seriale Hardware</button>
+      <button id="btn-simulazione" style="background: #e3f2fd; border-color: #90caf9; color: #1565c0;">
+        Usa Solo Simulatore (Offline)
+      </button>
     </div>
 
-    <!-- Sezione 2: Connesso -->
+    <!-- Sezione comandi attivi -->
     <div id="sezione-connesso" class="pannello nascosto" style="flex-direction: column;">
       
-      <!-- Riga pulsanti base -->
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button id="btn-ping">Invia Ping (ID 1)</button>
-        <button id="btn-leggi-pos">Leggi Posizione Reale</button>
-        <button id="btn-disconnetti" style="color: #b30000;">Disconnetti</button>
+      <!-- Diagnostica Singoli Motori -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: #f0f0f0; padding: 10px; border-radius: 6px;">
+        <span style="font-weight: bold; width: 100%; margin-bottom: 4px; font-size: 13px; color: #333;">
+          Diagnostica Hardware:
+        </span>
+        <button id="btn-ping-1">Ping Servo 1 (Base)</button>
+        <button id="btn-ping-2">Ping Servo 2 (Gomito)</button>
+        <button id="btn-leggi-pos-1">Leggi Pos 1</button>
+        <button id="btn-leggi-pos-2">Leggi Pos 2</button>
+        <button id="btn-disconnetti" style="color: #b30000; margin-left: auto;">Disconnetti / Esci</button>
       </div>
 
-      <!-- Controllo Coppia (Torque Enable) -->
-      <div style="display: flex; gap: 10px; margin-top: 12px;">
-        <button id="btn-coppia-on">Abilita lock</button>
-        <button id="btn-coppia-off">Disabilita lock</button>
+      <div style="display: flex; gap: 10px; margin-top: 12px; align-items: center;">
+        <button id="btn-coppia-on">Abilita lock (Entrambi)</button>
+        <button id="btn-coppia-off">Disabilita lock (Entrambi)</button>
         <span id="stato-coppia" style="font-size: 14px; font-weight: bold; margin-left: 8px;">
           🔒 Stato: Sconosciuto
         </span>
       </div>
 
-      <!-- Blocco Telemetria Integrata (carico e temperatura) -->
+      <!-- Box Telemetria Dual-Servo -->
       <div id="blocco-telemetria" class="box-telemetria">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <div>
-            <span style="font-weight: bold;">Carico Attuale:</span>
-            <span id="label-carico" style="font-size: 18px; font-weight: bold; margin-left: 6px;">0</span>
-          </div>
-          <div>
-            <span style="font-weight: bold;">Temperatura:</span>
-            <span id="label-temp" style="font-size: 18px; font-weight: bold; margin-left: 6px;">-- °C</span>
-          </div>
+        <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px;">
+          📊 Telemetria Motori in Tempo Reale
         </div>
-
-        <!-- Indicatore grafico del carico applicato a mano -->
-        <div style="background: #e0e0e0; border-radius: 4px; height: 10px; overflow: hidden; margin-bottom: 12px;">
-          <div id="barra-carico" style="background: #1976d2; height: 100%; width: 0%; transition: width 0.1s linear;"></div>
+        <div class="griglia-doppia" style="margin-bottom: 10px;">
+          <!-- Servo 1 -->
+          <div style="background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #eee;">
+            <div style="font-weight: bold; color: #ff9800; font-size: 13px;">SERVO 1 (Base - ID 1)</div>
+            <div style="font-size: 13px; margin-top: 4px;">Carico: <span id="label-carico-1" style="font-weight: bold;">0</span></div>
+            <div style="background: #e0e0e0; border-radius: 3px; height: 6px; margin: 4px 0 6px 0;">
+              <div id="barra-carico-1" style="background: #ff9800; height: 100%; width: 0%;"></div>
+            </div>
+            <div style="font-size: 13px;">Temperatura: <span id="label-temp-1" style="font-weight: bold;">-- °C</span></div>
+          </div>
+          <!-- Servo 2 -->
+          <div style="background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #eee;">
+            <div style="font-weight: bold; color: #2196f3; font-size: 13px;">SERVO 2 (Gomito - ID 2)</div>
+            <div style="font-size: 13px; margin-top: 4px;">Carico: <span id="label-carico-2" style="font-weight: bold;">0</span></div>
+            <div style="background: #e0e0e0; border-radius: 3px; height: 6px; margin: 4px 0 6px 0;">
+              <div id="barra-carico-2" style="background: #2196f3; height: 100%; width: 0%;"></div>
+            </div>
+            <div style="font-size: 13px;">Temperatura: <span id="label-temp-2" style="font-weight: bold;">-- °C</span></div>
+          </div>
         </div>
 
         <div style="display: flex; gap: 12px; align-items: center;">
-          <button id="btn-leggi-telemetria">Leggi Telemetria</button>
+          <button id="btn-leggi-telemetria">Leggi Ora Telemetria</button>
           <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
             <input type="checkbox" id="chk-auto-telemetria" />
-            Lettura continua (300ms)
+            Lettura continua entrambi i motori (300ms)
           </label>
         </div>
       </div>
 
-      <!-- Slider Posizione -->
+      <!-- Controllo Spazio Giunti (Joint Space) -->
       <div class="box-controllo">
-        <label for="slider-pos" style="font-weight: bold; display: block; margin-bottom: 8px;">
-          Posizione Obiettivo: <span id="label-gradi">180.0°</span> 
-          <span style="font-weight: normal; color: #666;">(<span id="label-step">2048</span> step)</span>
+        <label style="font-weight: bold; display: block; margin-bottom: 10px;">
+          🎛️ Controllo Diretto dei Giunti (Spazio Giunti)
         </label>
-        <input 
-          type="range" 
-          id="slider-pos" 
-          min="0" 
-          max="4095" 
-          value="2048" 
-          style="width: 100%; cursor: pointer;" 
-        />
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
-          <span>0° (0)</span>
-          <span>180° (2048)</span>
-          <span>360° (4095)</span>
+        
+        <div style="margin-bottom: 12px;">
+          <label for="slider-j1" style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px;">
+            Giunto 1 (Base - ID 1): <span id="label-j1-gradi">0.0°</span> 
+            <span style="font-weight: normal; color: #666;">(<span id="label-j1-step">2048</span> step)</span>
+          </label>
+          <input type="range" id="slider-j1" min="0" max="4095" value="2048" style="width: 100%; cursor: pointer;" />
+        </div>
+
+        <div>
+          <label for="slider-j2" style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px;">
+            Giunto 2 (Gomito - ID 2): <span id="label-j2-gradi">0.0°</span> 
+            <span style="font-weight: normal; color: #666;">(<span id="label-j2-step">2048</span> step)</span>
+          </label>
+          <input type="range" id="slider-j2" min="0" max="4095" value="2048" style="width: 100%; cursor: pointer;" />
         </div>
       </div>
 
-      <!-- Slider Velocità -->
+      <!-- Controllo Spazio Cartesiano Manuale (X, Y) -->
       <div class="box-controllo">
-        <label for="slider-vel" style="font-weight: bold; display: block; margin-bottom: 8px;">
-          Velocità Movimento: <span id="label-vel">1000</span> step/s
+        <label style="font-weight: bold; display: block; margin-bottom: 10px;">
+          📐 Spostamento Cartesiano Manuale (X, Y)
         </label>
-        <input 
-          type="range" 
-          id="slider-vel" 
-          min="100" 
-          max="3000" 
-          step="50"
-          value="1000" 
-          style="width: 100%; cursor: pointer;" 
-        />
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;">
-          <span>Lento (100)</span>
-          <span>Medio (1000)</span>
-          <span>Veloce (3000)</span>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <label>Target X (mm): <input type="number" id="input-manual-x" value="200" style="width: 80px;" /></label>
+          <label>Target Y (mm): <input type="number" id="input-manual-y" value="100" style="width: 80px;" /></label>
+          <button id="btn-sposta-cartesiano" style="background: #673ab7; color: white; border: none; font-weight: bold;">
+            Sposta a (X, Y)
+          </button>
         </div>
       </div>
 
+      <!-- Automazione Traiettoria Circolare -->
+      <div class="box-controllo">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px;">🔄 Automazione: Traccia un Cerchio</label>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+          <label>Centro X: <input type="number" id="input-cx" value="200" style="width: 60px;" /></label>
+          <label>Centro Y: <input type="number" id="input-cy" value="100" style="width: 60px;" /></label>
+          <label>Raggio: <input type="number" id="input-raggio" value="50" style="width: 60px;" /></label>
+          <label>Durata (s): <input type="number" id="input-durata" value="4" style="width: 60px;" /></label>
+        </div>
+        <button id="btn-avvia-cerchio" style="background: #4caf50; color: white; border: none; font-weight: bold;">Avvia Traiettoria</button>
+      </div>
+    </div>
+
+    <!-- Simulatore Canvas -->
+    <div class="canvas-container">
+      <div class="info-simulatore">
+        <span id="info-target">Target: X = 0 mm, Y = 0 mm</span>
+        <span id="info-angoli">θ1 = 0.0°, θ2 = 0.0°</span>
+        <span id="info-stato" style="color: #4caf50;">OK</span>
+      </div>
+      
+      <canvas id="simulatore-canvas" width="800" height="800"></canvas>
+
+      <div style="margin-top: 12px; color: #aaa; font-size: 13px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label>
+            Configurazione Gomito:
+            <select id="select-gomito" style="padding: 4px; border-radius: 4px;">
+              <option value="1">Gomito Basso (+1)</option>
+              <option value="-1">Gomito Alto (-1)</option>
+            </select>
+          </label>
+          <span>Area di Lavoro: R_max = 343 mm, R_min = 3 mm</span>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center; border-top: 1px solid #333; padding-top: 10px; flex-wrap: wrap;">
+          <button id="btn-invia-pos" style="background: #2196f3; color: white; border: none; font-weight: bold; padding: 8px 14px;">
+            🚀 Invia Posizione Corrente al Robot
+          </button>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #00ffcc;">
+            <input type="checkbox" id="chk-live-hardware" />
+            Abilita invio live continuo da mouse
+          </label>
+        </div>
+      </div>
     </div>
 
     <h3 style="margin-top: 24px;">Log eventi:</h3>
-    <div id="log">In attesa di connessione...</div>
+    <div id="log">In attesa di connessione o avvio simulazione...</div>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

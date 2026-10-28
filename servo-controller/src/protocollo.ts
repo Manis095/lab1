@@ -159,3 +159,19 @@ export function creaPacchettoPosizioneVelocita(
 export function creaPacchettoScrittura8(id: number, registro: number, valore: number): Uint8Array {
   return creaPacchetto(id, 0x03, [registro, valore & 0xFF]);
 }
+
+// Invia posizione e velocità ai due servo con un unico pacchetto broadcast per  mitigare il jitter dovuto alla trasmissione seriale asincrona.
+export function creaPacchettoSyncWrite2Servi(
+  id1: number, step1: number, vel1: number,
+  id2: number, step2: number, vel2: number
+): Uint8Array {
+  return creaPacchetto(0xFE, 0x83, [
+    0x2A, 4,
+    id1,
+    step1 & 0xFF, (step1 >> 8) & 0xFF,
+    vel1 & 0xFF, (vel1 >> 8) & 0xFF,
+    id2,
+    step2 & 0xFF, (step2 >> 8) & 0xFF,
+    vel2 & 0xFF, (vel2 >> 8) & 0xFF,
+  ]);
+}

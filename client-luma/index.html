@@ -2,26 +2,91 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <title>Controllo ESP32 - luma-esp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controllo ESP32 & Simulatore 2R</title>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 700px; margin: 20px auto; padding: 0 16px; }
-      .pannello-comandi { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-      button { padding: 10px 14px; font-weight: bold; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; }
-      #log { background: #1e1e1e; color: #00ffcc; padding: 12px; border-radius: 6px; font-family: monospace; height: 300px; overflow-y: auto; white-space: pre-wrap; }
+      body { font-family: system-ui, -apple-system, sans-serif; max-width: 860px; margin: 20px auto; padding: 0 20px; }
+      .pannello { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+      button { padding: 10px 16px; font-size: 14px; cursor: pointer; border-radius: 6px; border: 1px solid #ccc; background: #f4f4f4; font-weight: bold; }
+      button:hover { background: #e8e8e8; }
+      .box-controllo { background: #f9f9f9; padding: 14px; border-radius: 6px; border: 1px solid #ddd; margin-top: 12px; }
+      .box-telemetria { background: #f9f9f9; padding: 14px; border-radius: 6px; border: 1px solid #ddd; margin-top: 12px; }
+      .canvas-container { display: flex; flex-direction: column; align-items: center; background: #1e1e1e; border-radius: 8px; padding: 14px; margin-top: 16px; }
+      canvas { background: #121212; border: 1px solid #333; border-radius: 6px; cursor: crosshair; }
+      .info-simulatore { color: #00ffcc; font-family: monospace; font-size: 14px; width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px; }
+      #log { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; height: 160px; overflow-y: auto; white-space: pre-wrap; }
+      .griglia-doppia { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     </style>
   </head>
   <body>
-    <h1>Inizializzazione Bridge ESP32 (L3)</h1>
+    <h1>Controllo Servo STS & Simulatore 2R</h1>
 
-    <div class="pannello-comandi">
-      <button id="btn-status">1. Status</button>
-      <button id="btn-scan">2. Scan Motori</button>
-      <button id="btn-config" style="background: #e3f2fd;">3. Invia Profilo (Config.set)</button>
-      <button id="btn-arm" style="background: #4caf50; color: white; border: none;">4. Arm</button>
+    <div class="pannello">
+      <button id="btn-status">Status</button>
+      <button id="btn-scan">Scan Motori</button>
+      <button id="btn-config" style="background: #e3f2fd;">Invia Profilo</button>
+      <button id="btn-arm" style="background: #4caf50; color: white; border: none;">Arm</button>
       <button id="btn-disarm" style="background: #f44336; color: white; border: none;">Disarm</button>
     </div>
 
-    <h3>Log Eventi WebSocket:</h3>
+    <div id="blocco-telemetria" class="box-telemetria">
+      <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px;">Telemetria Motori in Tempo Reale</div>
+      <div class="griglia-doppia" style="margin-bottom: 10px;">
+        <div style="background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #eee;">
+          <div style="font-weight: bold; color: #ff9800; font-size: 13px;">SERVO 1 (Base - ID 1)</div>
+          <div style="font-size: 13px; margin-top: 4px;">Carico: <span id="label-carico-1" style="font-weight: bold;">0</span></div>
+          <div style="background: #e0e0e0; border-radius: 3px; height: 6px; margin: 4px 0 6px 0;">
+            <div id="barra-carico-1" style="background: #ff9800; height: 100%; width: 0%;"></div>
+          </div>
+          <div style="font-size: 13px;">Temperatura: <span id="label-temp-1" style="font-weight: bold;">-- °C</span></div>
+        </div>
+        <div style="background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #eee;">
+          <div style="font-weight: bold; color: #2196f3; font-size: 13px;">SERVO 2 (Gomito - ID 2)</div>
+          <div style="font-size: 13px; margin-top: 4px;">Carico: <span id="label-carico-2" style="font-weight: bold;">0</span></div>
+          <div style="background: #e0e0e0; border-radius: 3px; height: 6px; margin: 4px 0 6px 0;">
+            <div id="barra-carico-2" style="background: #2196f3; height: 100%; width: 0%;"></div>
+          </div>
+          <div style="font-size: 13px;">Temperatura: <span id="label-temp-2" style="font-weight: bold;">-- °C</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box-controllo">
+      <label style="font-weight: bold; display: block; margin-bottom: 10px;">Controllo Diretto dei Giunti (Spazio Giunti)</label>
+      <div style="margin-bottom: 12px;">
+        <label for="slider-j1" style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px;">
+          Giunto 1 (Base - ID 1): <span id="label-j1-gradi">0.0°</span> 
+          <span style="font-weight: normal; color: #666;">(<span id="label-j1-step">2048</span> step)</span>
+        </label>
+        <input type="range" id="slider-j1" min="0" max="4095" value="2048" style="width: 100%; cursor: pointer;" />
+      </div>
+      <div>
+        <label for="slider-j2" style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px;">
+          Giunto 2 (Gomito - ID 2): <span id="label-j2-gradi">0.0°</span> 
+          <span style="font-weight: normal; color: #666;">(<span id="label-j2-step">2048</span> step)</span>
+        </label>
+        <input type="range" id="slider-j2" min="0" max="4095" value="2048" style="width: 100%; cursor: pointer;" />
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <div class="info-simulatore">
+        <span id="info-target">Target: X = 0 mm, Y = 0 mm</span>
+        <span id="info-angoli">θ1 = 0.0°, θ2 = 0.0°</span>
+        <span id="info-stato" style="color: #4caf50;">OK</span>
+      </div>
+      <canvas id="simulatore-canvas" width="800" height="800"></canvas>
+      <div style="margin-top: 12px; color: #aaa; font-size: 13px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+        <div style="display: flex; gap: 12px; align-items: center; border-top: 1px solid #333; padding-top: 10px; flex-wrap: wrap;">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #00ffcc;">
+            <input type="checkbox" id="chk-live-hardware" />
+            Abilita invio live continuo (Movimento e Canvas)
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 24px;">Log eventi:</h3>
     <div id="log">In attesa di connessione...</div>
 
     <script type="module" src="/src/main.ts"></script>
